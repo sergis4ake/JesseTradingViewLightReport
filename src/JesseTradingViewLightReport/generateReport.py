@@ -88,7 +88,7 @@ def generateReport(customData={}, chartConfig={}):
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{title}}</title>
+    <title>DUAL_THRUST-Binance Spot-ETH-USDT-2h</title>
     <style>
       .go-to-realtime-button {
         width: 27px;
@@ -102,8 +102,8 @@ def generateReport(customData={}, chartConfig={}):
         text-align: center;
         z-index: 1000;
         color: #B2B5BE;
-        background: rgba(250, 250, 250, 0.95);
-        box-shadow: 0 2px 5px 0 rgba(117, 134, 150, 0.45);
+        background-color: #222;
+        box-shadow: 0 2px 5px 0 #a3a3a3;
       }
     </style>    
 </head>
@@ -112,8 +112,8 @@ def generateReport(customData={}, chartConfig={}):
 </body>
 """
         if chartConfig.get('isPvsra', None) or len(customData) == 0:
-            tpl += r"""
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+            tpl += fr"""
+<script src="https://unpkg.com/lightweight-charts/dist/{FILE_NAME_LIGHTWEIGHT_CHARTS}"></script>
 """
         else:
             tpl += fr"""<script>{read_file(FILE_NAME_LIGHTWEIGHT_CHARTS)}</script>"""
@@ -126,8 +126,7 @@ def generateReport(customData={}, chartConfig={}):
 {{!numDecimals}}
 
 const getCandleData = async () => {
-
-  const cdata = candleData.split('\n').map((row) => {
+  return candleData.split('\n').map((row) => {
     const [time, open, high, low, close, volume, color, borderColor, wickColor] = row.split(',');
     var res = {
       time: time * 1,
@@ -144,31 +143,26 @@ const getCandleData = async () => {
     }
     return res;
   });
-  return cdata;
 };
 
 const getVolumeData = async () => {
-
-  const vdata = candleData.split('\n').map((row) => {
+  return candleData.split('\n').map((row) => {
     const [time, x1, x2, x3, x4, volume] = row.split(',');
     return {
       time: time * 1,
       value: volume * 1
     };
   });
-  return vdata;
 };
 
 function roundToDecimals(n, decimals) {
   var log10 = n ? Math.floor(Math.log10(n)) : 0,
-      div = log10 < 0 ? Math.pow(10, decimals - log10 - 1) : Math.pow(10, decimals);
-
+     div = log10 < 0 ? Math.pow(10, decimals - log10 - 1) : Math.pow(10, decimals);
   return Math.round(n * div) / div;
 }
 
 const getOrderData = async () => {
-
-  const odata = orderData.split('\n').map((row) => {
+  return orderData.split('\n').map((row) => {
     const [time, mode, side, type, qty, price, pnl_order, pnl_accumulated] = row.split(',');
     const price_round = roundToDecimals(parseFloat(price), numDecimals);
     const qty_round = roundToDecimals(parseFloat(qty), numDecimals);
@@ -177,7 +171,6 @@ const getOrderData = async () => {
     const position = (side === 'sell')?'aboveBar':'belowBar';
     const shape = (side === 'sell')?'arrowDown':'arrowUp';
     const color = (side === 'sell')?'rgba(251, 192, 45, 1)':'#2196F3';
-    
     return {
       time: time * 1,
       position: position,
@@ -186,32 +179,27 @@ const getOrderData = async () => {
       text : type + ' @ ' + price_round + ' : ' + qty_round + mode + ' $' + pnl_order_round
     };
   });
-  return odata;
 };
 
 const getPnlData = async () => {
-
-  const data = orderData.split('\n').map((row) => {
+  return orderData.split('\n').map((row) => {
     const [time, mode, side, type, qty, price, pnl_order, pnl_accumulated] = row.split(',');
-    const pnl_accumulated_round = roundToDecimals(parseFloat(pnl_accumulated) * 1, numDecimals);
+    const pnl_accumulated_round = roundToDecimals(parseFloat(pnl_accumulated), numDecimals);
     return {
       time: time * 1,
       value: pnl_accumulated_round * 1
     };
   });
-  return data;
 };
 
 const getCustomData = async (offset) => {
-
-  const data = candleData.split('\n').map((row) => {
+  return candleData.split('\n').map((row) => {
     const arr = row.split(',');
     return {
       time: arr[0] * 1,
       value: arr[offset+9] * 1
     };
   });
-  return data;
 };
 
 var chartWidth = window.innerWidth-20;
@@ -221,28 +209,50 @@ const displayChart = async () => {
     width: chartWidth,
     height: chartHeight,
     layout: {
-      backgroundColor: '#131722',
-      textColor: '#d1d4dc',
+      background: { color: 'rgba(17,17,17,0.83)'},
+      textColor: '#DDD',
     },
     grid: {
-      vertLines: {
-        color: 'rgba(42, 46, 57, 0)',
-      },
-      horzLines: {
-        color: 'rgba(42, 46, 57, 0.6)',
-      },
-    },{{!priceScale}}
+        vertLines: {
+            color: 'rgba(17,17,17,0.83)',
+        },
+        horzLines: {
+            color: 'rgba(22,22,22,0.83)',
+        }
+    },
     timeScale: {
       timeVisible: true,
       secondsVisible: true,
     },
     crosshair: {
-		mode: LightweightCharts.CrosshairMode.Normal,
-	},
+        // Change mode from default 'magnet' to 'normal'.
+        // Allows the crosshair to move freely without snapping to datapoints
+        mode: LightweightCharts.CrosshairMode.Normal,
+
+        // Vertical crosshair line (showing Date in Label)
+        vertLine: {
+            width: 6,
+            color: 'rgba(188,192,219,0.15)',
+            style: LightweightCharts.LineStyle.Solid,
+            labelBackgroundColor: 'rgba(23,95,192,0.34)',
+        },
+
+        // Horizontal crosshair line (showing Price in Label)
+        horzLine: {
+            color: '#7E7D7DFF',
+            labelBackgroundColor: '#605f5f',
+        },
+    },
+    watermark: {
+      color: 'rgba(154,154,154,0.07)',
+      visible: true,
+      text: '{{!title}}',
+      fontSize: 60,
+      family: 'Comic Sans',
+      horzAlign: 'bottom',
+      vertAlign: 'bottom',
+    }
   };
-  
-
-
 
   const domElement = document.getElementById('tvchart');
   const chart = LightweightCharts.createChart(domElement, chartProperties);
@@ -253,16 +263,18 @@ const displayChart = async () => {
   candleseries.setMarkers(odata);
 
   const histogramSeries = chart.addHistogramSeries({
-        color: 'rgba(4, 111, 232, 0.2)',
-        priceFormat: {
-            type: 'volume',
-        },
-        priceScaleId: '',
-        scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-        },
-    });
+    color: 'rgba(4,111,232,0.09)',
+    priceFormat: {
+        type: 'volume',
+    },
+	priceScaleId: '', // set as an overlay by setting a blank priceScaleId
+  });
+  histogramSeries.priceScale().applyOptions({
+    scaleMargins: {
+        top: 0.7, // highest point of the series will be 70% away from the top
+        bottom: 0,
+    },
+  });
   const vdata = await getVolumeData();
   histogramSeries.setData(vdata);
 
@@ -270,53 +282,39 @@ const displayChart = async () => {
 
   {{!pnlCharts}}
 
-  //chart.timeScale().fitContent();
+  var width = 27;
+  var height = 27;
+  var button = document.createElement('div');
+  button.className = 'go-to-realtime-button';
+  button.style.left = (chartWidth - width - 60) + 'px';
+  button.style.top = (chartHeight - height - 30) + 'px';
+  button.style.color = '#444';
+  button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" width="14" height="14"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M6.5 1.5l5 5.5-5 5.5M3 4l2.5 3L3 10"></path></svg>';
+  document.body.appendChild(button);
 
-	//chart.timeScale().scrollToPosition(-20, false);
+  var timeScale = chart.timeScale();
+  timeScale.subscribeVisibleTimeRangeChange(function() {
+    var buttonVisible = timeScale.scrollPosition() < 0;
+    button.style.display = buttonVisible ? 'block' : 'none';
+  });
 
-	var width = 27;
-	var height = 27;
-	var button = document.createElement('div');
-	button.className = 'go-to-realtime-button';
-	button.style.left = (chartWidth - width - 60) + 'px';
-	button.style.top = (chartHeight - height - 30) + 'px';
-	button.style.color = '#4c525e';
-	button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" width="14" height="14"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M6.5 1.5l5 5.5-5 5.5M3 4l2.5 3L3 10"></path></svg>';
-	document.body.appendChild(button);
+  button.addEventListener('click', function() {
+    timeScale.scrollToRealTime();
+  });
 
-	var timeScale = chart.timeScale();
-	timeScale.subscribeVisibleTimeRangeChange(function() {
-		var buttonVisible = timeScale.scrollPosition() < 0;
-		button.style.display = buttonVisible ? 'block' : 'none';
-	});
+  button.addEventListener('mouseover', function() {
+	button.style.background = '#DDD';
+	button.style.color = '#444';
+  });
 
-	button.addEventListener('click', function() {
-		timeScale.scrollToRealTime();
-	});
+  button.addEventListener('mouseout', function() {
+	button.style.background = '#DDD';
+	button.style.color = '#444';
+  });
 
-	button.addEventListener('mouseover', function() {
-		button.style.background = 'rgba(250, 250, 250, 1)';
-		button.style.color = '#000';
-	});
-
-	button.addEventListener('mouseout', function() {
-		button.style.background = 'rgba(250, 250, 250, 0.6)';
-		button.style.color = '#4c525e';
-	}); 
-
-  
-function updateWindowSize() {
-	chartWidth = window.innerWidth-20;
-	chartHeight = window.innerHeight-20;
-  chart.applyOptions({     width: chartWidth,    height: chartHeight, });
-	button.style.left = (chartWidth - width - 60) + 'px';
-	button.style.top = (chartHeight - height - 30) + 'px';
-}  
-
-  window.onresize = updateWindowSize;
-
-
-
+  window.addEventListener('resize', () => {
+    chart.resize(window.innerWidth, window.innerHeight);
+  });
 };
 
 displayChart();
@@ -369,14 +367,14 @@ displayChart();
                     candleData += ',silver,silver,gray'
                 else:
                     candleData += ',gray,gray,gray'
-
             else:
                 candleData += ', , , '
 
             if len(customData) > 0:
                 for key, value in customData.items():
-                    candleData += ','
-                    candleData += str(value['data'][idx])
+                    if idx < len(value['data']):
+                        candleData += ','
+                        candleData += str(value['data'][idx])
 
             candleData += '\n'
         if candleData[-1] == '\n':
@@ -400,8 +398,9 @@ displayChart();
                         # pnl is just fees as increasing size
                         pnl_order = -fee
                         average_entry_price = (
-                            (average_entry_price * average_entry_size + order.price * abs(order.qty))
-                            / (average_entry_size + abs(order.qty))
+                                (average_entry_price * average_entry_size + order.price * abs(
+                                    order.qty))
+                                / (average_entry_size + abs(order.qty))
                         )
                         average_entry_size += abs(order.qty)
                     else:
@@ -446,8 +445,8 @@ displayChart();
         pnlCharts = ''
         priceScale = ''
         if chartConfig.get('pnl', None):
-            pnlCharts = 'chart.addLineSeries({color: \'rgba(4, 111, 232, 1)\', lineWidth: 1, priceScaleId: \'left\',}).setData(await getPnlData())'
-            priceScale = ' rightPriceScale: {		visible: true, borderColor: \'rgba(197, 203, 206, 1)\'	}, leftPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\'	},'
+            pnlCharts = "chart.addLineSeries({color: \'rgba(4, 111, 232, 1)\', lineWidth: 1, priceScaleId: \'left\',}).setData(await getPnlData())"
+            priceScale = " rightPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\' }, leftPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\'},"
 
         # Get number of decimals from config, default to 2
         numDecimals = fr"""const numDecimals = {chartConfig.get('numDecimals', 3)};"""
