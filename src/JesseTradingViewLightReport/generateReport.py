@@ -247,10 +247,10 @@ const displayChart = async () => {
       color: 'rgba(154,154,154,0.07)',
       visible: true,
       text: '{{!title}}',
-      fontSize: 60,
+      fontSize: 40,
       family: 'Comic Sans',
       horzAlign: 'bottom',
-      vertAlign: 'bottom',
+      vertAlign: 'top',
     }
   };
 
@@ -448,7 +448,7 @@ displayChart();
             pnlCharts = "chart.addLineSeries({color: \'rgba(4, 111, 232, 1)\', lineWidth: 1, priceScaleId: \'left\',}).setData(await getPnlData())"
             priceScale = " rightPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\' }, leftPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\'},"
 
-        # Get number of decimals from config, default to 2
+        # Get number of decimals from config, default to 3
         numDecimals = fr"""const numDecimals = {chartConfig.get('numDecimals', 3)};"""
 
         info = {
