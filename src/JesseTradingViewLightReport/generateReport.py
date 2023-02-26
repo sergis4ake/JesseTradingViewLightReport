@@ -22,6 +22,7 @@ import os
 from enum import IntEnum
 
 FILE_NAME_LIGHTWEIGHT_CHARTS = 'lightweight-charts.standalone.production.js'
+VERSION_LIGHTWEIGHT_CHARTS = '@4.0.0'
 
 
 class CD(IntEnum):
@@ -110,20 +111,31 @@ def generateReport(customData={}, chartConfig={}):
 <body style="background-color:black;">
     <div id="tvchart"></div>
 </body>
+
 """
-        if chartConfig.get('isPvsra', None) or len(customData) == 0:
-            tpl += fr"""
-<script src="https://unpkg.com/lightweight-charts/dist/{FILE_NAME_LIGHTWEIGHT_CHARTS}"></script>
-"""
-        else:
-            tpl += fr"""<script>{read_file(FILE_NAME_LIGHTWEIGHT_CHARTS)}</script>"""
+        # if chartConfig.get('isPvsra', None):
+        #    tpl += fr"""<script>{read_file(FILE_NAME_LIGHTWEIGHT_CHARTS)}</script>"""
+        # else:
+        tpl += fr"""<script src="https://unpkg.com/lightweight-charts{VERSION_LIGHTWEIGHT_CHARTS}/dist/{FILE_NAME_LIGHTWEIGHT_CHARTS}"></script>"""
         tpl += r"""
 <script>
+{{!equityData}}
+
 {{!candleData}}
 
 {{!orderData}}
 
 {{!numDecimals}}
+
+const getEquityData = async () => {
+    return equityData.split('\n').map((row) => {
+        const [time, equity] = row.split(',');
+        return {
+            time: time * 1,
+            value: equity * 1,
+        };
+    });
+};
 
 const getCandleData = async () => {
   return candleData.split('\n').map((row) => {
@@ -280,6 +292,8 @@ const displayChart = async () => {
 
   {{!customCharts}}
 
+  {{!equityCharts}}
+
   {{!pnlCharts}}
 
   var width = 27;
@@ -428,6 +442,20 @@ displayChart();
             orderData = orderData.rstrip(orderData[-1])  # remove last new line
         orderData += '`;'
 
+        equityCharts = ''
+        equityData = 'const equityData = `'
+        daily_balance = charts.equity_curve()
+        if chartConfig.get('equity', None):
+            if daily_balance:
+                for balance in daily_balance:
+                    equityData += str(balance['timestamp']) + ','
+                    equityData += str(balance['balance']) + '\n'
+                else:
+                    equityData = equityData.rstrip('\n')
+            equityCharts = "chart.addLineSeries({priceScaleId: \'left\', lineWidth: 1, color: \'rgba(251, 192, 45, 0.3)\'}).setData(await getEquityData())"
+            equityCharts += "\nchart.applyOptions({leftPriceScale: {visible: true}});"
+        equityData += '`;'
+
         customCharts = ''
         if len(customData) > 0:
             idx = 0
@@ -443,10 +471,8 @@ displayChart();
                 idx += 1
 
         pnlCharts = ''
-        priceScale = ''
         if chartConfig.get('pnl', None):
             pnlCharts = "chart.addLineSeries({color: \'rgba(4, 111, 232, 1)\', lineWidth: 1, priceScaleId: \'left\',}).setData(await getPnlData())"
-            priceScale = " rightPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\' }, leftPriceScale: { visible: true, borderColor: \'rgba(197, 203, 206, 1)\'},"
 
         # Get number of decimals from config, default to 3
         numDecimals = fr"""const numDecimals = {chartConfig.get('numDecimals', 3)};"""
@@ -454,10 +480,11 @@ displayChart();
         info = {
             'title': studyname,
             'candleData': candleData,
+            'equityData': equityData,
             'orderData': orderData,
             'customCharts': customCharts,
             'pnlCharts': pnlCharts,
-            'priceScale': priceScale,
+            'equityCharts': equityCharts,
             'numDecimals': numDecimals,
         }
 
